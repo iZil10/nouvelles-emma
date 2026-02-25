@@ -30,17 +30,42 @@
     </div>
   </main>
 
+  <!-- Separateur -->
+  <div class="section-divider"></div>
+
+  <!-- Livre d'or -->
+  <section class="guestbook">
+    <h2 class="guestbook-title">Un petit mot pour Emma</h2>
+
+    <form class="guestbook-form" id="guestbook-form">
+      <div class="form-feedback" id="form-feedback"></div>
+      <input type="text" id="msg-name" placeholder="Ton prenom" maxlength="50" required>
+      <textarea id="msg-text" placeholder="Un petit mot d'encouragement..." maxlength="500" required></textarea>
+      <button type="submit" id="msg-submit">Envoyer</button>
+    </form>
+
+    <div class="guestbook-messages" id="guestbook-messages">
+      <div class="guestbook-loading">Chargement des messages...</div>
+    </div>
+  </section>
+
   <!-- Pied de page -->
   <footer class="footer">
     Fait avec <span class="heart">&#10084;</span> pour Emma
   </footer>
 
-  <!-- Chargement des nouvelles -->
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <!-- Configuration Firebase + Nouvelles -->
+  <script src="firebase-config.js"></script>
   <script src="updates.js"></script>
+
   <script>
     // --- Afficher les nouvelles ---
     function renderUpdates() {
-      const timeline = document.getElementById('timeline');
+      var timeline = document.getElementById('timeline');
 
       if (!UPDATES || UPDATES.length === 0) {
         timeline.innerHTML = '<div class="empty-state">Pas encore de nouvelles... Revenez bientot !</div>';
@@ -49,9 +74,9 @@
 
       timeline.innerHTML = UPDATES.map(function(update) {
         return '<article class="update-card">' +
-          '<div class="update-date">' + update.date + '</div>' +
-          '<h2 class="update-title"><span class="emoji">' + update.emoji + '</span>' + update.titre + '</h2>' +
-          '<div class="update-content">' + update.contenu + '</div>' +
+          '<div class="update-date">' + escapeHtml(update.date) + '</div>' +
+          '<h2 class="update-title"><span class="emoji">' + update.emoji + '</span>' + escapeHtml(update.titre) + '</h2>' +
+          '<div class="update-content">' + escapeHtml(update.contenu) + '</div>' +
         '</article>';
       }).join('');
     }
@@ -59,7 +84,7 @@
     // --- Petits coeurs flottants ---
     function createHearts() {
       var container = document.getElementById('hearts');
-      var symbols = ['💛', '🌸', '✨', '💗', '🩷'];
+      var symbols = ['\u{1F49B}', '\u{1F338}', '\u2728', '\u{1F497}', '\u{1FA77}'];
 
       for (var i = 0; i < 12; i++) {
         var heart = document.createElement('span');
@@ -73,9 +98,109 @@
       }
     }
 
+    // --- Protection XSS ---
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- Formater la date ---
+    function formatDate(timestamp) {
+      var d = new Date(timestamp);
+      var mois = ['jan', 'fev', 'mars', 'avril', 'mai', 'juin',
+                  'juil', 'aout', 'sept', 'oct', 'nov', 'dec'];
+      return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear()
+             + ' a ' + d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    // --- Livre d'or (Firebase) ---
+    function initGuestbook() {
+      // Verifier que Firebase est configure
+      if (!firebaseConfig || firebaseConfig.apiKey === 'REMPLACE_MOI') {
+        document.getElementById('guestbook-messages').innerHTML =
+          '<div class="guestbook-empty">Le livre d\'or sera disponible bientot !</div>';
+        return;
+      }
+
+      // Initialiser Firebase
+      firebase.initializeApp(firebaseConfig);
+      var db = firebase.database();
+      var messagesRef = db.ref('messages');
+
+      // Ecouter les messages en temps reel
+      messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
+        var container = document.getElementById('guestbook-messages');
+        var messages = [];
+
+        snapshot.forEach(function(child) {
+          messages.push(child.val());
+        });
+
+        // Plus recents en premier
+        messages.reverse();
+
+        if (messages.length === 0) {
+          container.innerHTML = '<div class="guestbook-empty">Sois le premier a laisser un petit mot !</div>';
+          return;
+        }
+
+        container.innerHTML = messages.map(function(msg) {
+          return '<div class="guestbook-msg">' +
+            '<div class="guestbook-msg-header">' +
+              '<span class="guestbook-msg-name">' + escapeHtml(msg.name) + '</span>' +
+              '<span class="guestbook-msg-date">' + formatDate(msg.timestamp) + '</span>' +
+            '</div>' +
+            '<div class="guestbook-msg-text">' + escapeHtml(msg.text) + '</div>' +
+          '</div>';
+        }).join('');
+      });
+
+      // Envoyer un message
+      document.getElementById('guestbook-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var nameInput = document.getElementById('msg-name');
+        var textInput = document.getElementById('msg-text');
+        var submitBtn = document.getElementById('msg-submit');
+        var feedback = document.getElementById('form-feedback');
+
+        var name = nameInput.value.trim();
+        var text = textInput.value.trim();
+
+        if (!name || !text) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Envoi...';
+
+        messagesRef.push({
+          name: name,
+          text: text,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        }).then(function() {
+          nameInput.value = '';
+          textInput.value = '';
+          feedback.className = 'form-feedback success';
+          feedback.textContent = 'Merci pour ton message !';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Envoyer';
+
+          setTimeout(function() {
+            feedback.className = 'form-feedback';
+          }, 3000);
+        }).catch(function() {
+          feedback.className = 'form-feedback error';
+          feedback.textContent = 'Oups, erreur... Reessaie !';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Envoyer';
+        });
+      });
+    }
+
     // --- Lancer ---
     renderUpdates();
     createHearts();
+    initGuestbook();
   </script>
 
 </body>
