@@ -412,6 +412,142 @@ body {
   white-space: pre-line;
 }
 
+.guestbook-msg-actions {
+  margin-top: 0.5rem;
+}
+
+.reply-toggle {
+  background: none;
+  border: none;
+  color: #b07daa;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.reply-toggle:hover {
+  color: #7b1fa2;
+}
+
+/* Reply form (inline) */
+
+.reply-form {
+  display: none;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(206, 147, 216, 0.15);
+}
+
+.reply-form.visible {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.reply-form input {
+  flex: 0 0 30%;
+  min-width: 80px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  color: #5d4037;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  outline: none;
+}
+
+.reply-form textarea {
+  flex: 1 1 100%;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  color: #5d4037;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  outline: none;
+  resize: vertical;
+  min-height: 50px;
+}
+
+.reply-form input:focus,
+.reply-form textarea:focus {
+  border-color: #ce93d8;
+}
+
+.reply-form button {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ec407a, #ab47bc);
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.reply-form button:hover {
+  transform: translateY(-1px);
+}
+
+.reply-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Replies list */
+
+.replies-list {
+  margin-top: 0.6rem;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(206, 147, 216, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reply-item {
+  padding: 0.5rem 0;
+}
+
+.reply-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.15rem;
+}
+
+.reply-item-name {
+  font-weight: 700;
+  color: #ab47bc;
+  font-size: 0.9rem;
+}
+
+.reply-item-date {
+  font-size: 0.72rem;
+  color: #b07daa;
+}
+
+.reply-item-text {
+  color: #5d4037;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.replies-count {
+  color: #b07daa;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+
 .guestbook-empty {
   text-align: center;
   padding: 2rem 1rem;

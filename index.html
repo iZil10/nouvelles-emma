@@ -108,9 +108,10 @@
   <script src="updates.js"></script>
 
   <script>
-    var db, updatesRef, messagesRef;
+    var db, updatesRef, messagesRef, repliesRef;
     var ADMIN_PIN = '012139';
     var firebaseUpdates = [];
+    var allReplies = {};
 
     // --- Protection XSS ---
     function escapeHtml(text) {
@@ -199,9 +200,11 @@
       db = firebase.database();
       messagesRef = db.ref('messages');
       updatesRef = db.ref('updates');
+      repliesRef = db.ref('replies');
 
       initUpdatesListener();
       initGuestbook();
+      initRepliesListener();
     }
 
     // --- Ecouter les nouvelles Firebase ---
@@ -225,32 +228,127 @@
       });
     }
 
+    // --- Ecouter les reponses ---
+    function initRepliesListener() {
+      repliesRef.on('value', function(snapshot) {
+        allReplies = {};
+        snapshot.forEach(function(parentSnap) {
+          var parentId = parentSnap.key;
+          allReplies[parentId] = [];
+          parentSnap.forEach(function(replySnap) {
+            allReplies[parentId].push(replySnap.val());
+          });
+          // Trier par date
+          allReplies[parentId].sort(function(a, b) { return a.timestamp - b.timestamp; });
+        });
+        renderMessages();
+      });
+    }
+
+    // --- Afficher les messages ---
+    function renderMessages() {
+      var container = document.getElementById('guestbook-messages');
+      if (!window._guestbookMessages || window._guestbookMessages.length === 0) {
+        container.innerHTML = '<div class="guestbook-empty">Sois le premier a laisser un petit mot !</div>';
+        return;
+      }
+
+      container.innerHTML = window._guestbookMessages.map(function(msg) {
+        var replies = allReplies[msg.key] || [];
+        var repliesHtml = '';
+
+        if (replies.length > 0) {
+          repliesHtml = '<div class="replies-list">' +
+            replies.map(function(r) {
+              return '<div class="reply-item">' +
+                '<div class="reply-item-header">' +
+                  '<span class="reply-item-name">' + escapeHtml(r.name) + '</span>' +
+                  '<span class="reply-item-date">' + formatDate(r.timestamp) + '</span>' +
+                '</div>' +
+                '<div class="reply-item-text">' + escapeHtml(r.text) + '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>';
+        }
+
+        var replyCountText = replies.length > 0
+          ? '<span class="replies-count">(' + replies.length + ')</span>'
+          : '';
+
+        return '<div class="guestbook-msg">' +
+          '<div class="guestbook-msg-header">' +
+            '<span class="guestbook-msg-name">' + escapeHtml(msg.name) + '</span>' +
+            '<span class="guestbook-msg-date">' + formatDate(msg.timestamp) + '</span>' +
+          '</div>' +
+          '<div class="guestbook-msg-text">' + escapeHtml(msg.text) + '</div>' +
+          '<div class="guestbook-msg-actions">' +
+            '<button class="reply-toggle" data-msgkey="' + msg.key + '">Repondre' + replyCountText + '</button>' +
+          '</div>' +
+          repliesHtml +
+          '<div class="reply-form" id="reply-form-' + msg.key + '">' +
+            '<input type="text" placeholder="Ton prenom" maxlength="50" class="reply-name">' +
+            '<textarea placeholder="Ta reponse..." maxlength="500" class="reply-text"></textarea>' +
+            '<button type="button" class="reply-send" data-msgkey="' + msg.key + '">Envoyer</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Toggle reply forms
+      container.querySelectorAll('.reply-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var form = document.getElementById('reply-form-' + btn.dataset.msgkey);
+          form.classList.toggle('visible');
+          if (form.classList.contains('visible')) {
+            form.querySelector('.reply-name').focus();
+          }
+        });
+      });
+
+      // Send replies
+      container.querySelectorAll('.reply-send').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var msgKey = btn.dataset.msgkey;
+          var form = document.getElementById('reply-form-' + msgKey);
+          var nameInput = form.querySelector('.reply-name');
+          var textInput = form.querySelector('.reply-text');
+          var name = nameInput.value.trim();
+          var text = textInput.value.trim();
+          if (!name || !text) return;
+
+          btn.disabled = true;
+          btn.textContent = 'Envoi...';
+
+          repliesRef.child(msgKey).push({
+            name: name,
+            text: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          }).then(function() {
+            nameInput.value = '';
+            textInput.value = '';
+            form.classList.remove('visible');
+            btn.disabled = false;
+            btn.textContent = 'Envoyer';
+          }).catch(function() {
+            btn.disabled = false;
+            btn.textContent = 'Envoyer';
+          });
+        });
+      });
+    }
+
     // --- Livre d'or ---
     function initGuestbook() {
       messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
-        var container = document.getElementById('guestbook-messages');
-        var messages = [];
+        window._guestbookMessages = [];
 
         snapshot.forEach(function(child) {
-          messages.push(child.val());
+          var msg = child.val();
+          msg.key = child.key;
+          window._guestbookMessages.push(msg);
         });
 
-        messages.reverse();
-
-        if (messages.length === 0) {
-          container.innerHTML = '<div class="guestbook-empty">Sois le premier a laisser un petit mot !</div>';
-          return;
-        }
-
-        container.innerHTML = messages.map(function(msg) {
-          return '<div class="guestbook-msg">' +
-            '<div class="guestbook-msg-header">' +
-              '<span class="guestbook-msg-name">' + escapeHtml(msg.name) + '</span>' +
-              '<span class="guestbook-msg-date">' + formatDate(msg.timestamp) + '</span>' +
-            '</div>' +
-            '<div class="guestbook-msg-text">' + escapeHtml(msg.text) + '</div>' +
-          '</div>';
-        }).join('');
+        window._guestbookMessages.reverse();
+        renderMessages();
       });
 
       document.getElementById('guestbook-form').addEventListener('submit', function(e) {
