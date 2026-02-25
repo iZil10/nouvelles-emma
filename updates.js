@@ -7,6 +7,19 @@
 const UPDATES = [
   {
     date: "25 fevrier 2026",
+    emoji: "🏥",
+    titre: "Operation en cours",
+    contenu: `Vers 1h30, Emma est partie se faire operer du femur 💪 Je ne sais pas s'ils allaient operer aussi d'autres fractures en meme temps.
+
+L'operation pouvait durer entre 2 a 3 heures. Je n'ai pas encore eu de retour pour le moment (17h28) ⏳
+
+Je vous tiens au courant, je vais bientot passer a l'hopital 🏥
+
+Merci pour vos messages, ca fait chaud au coeur 💛`
+  },
+
+  {
+    date: "25 fevrier 2026",
     emoji: "💛",
     titre: "Premiere nouvelle !",
     contenu: `Coucou a tous ! Ce petit site est la pour vous donner des nouvelles d'Emma sans que je spamme vos messages.
