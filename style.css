@@ -86,6 +86,45 @@ body {
   }
 }
 
+/* --- Two-column layout --- */
+
+.two-columns {
+  display: flex;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 3rem;
+  position: relative;
+  z-index: 1;
+  align-items: flex-start;
+}
+
+.col-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.col-right {
+  flex: 1;
+  min-width: 0;
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar style for the guestbook column */
+.col-right::-webkit-scrollbar {
+  width: 5px;
+}
+
+.col-right::-webkit-scrollbar-thumb {
+  background: rgba(206, 147, 216, 0.3);
+  border-radius: 3px;
+}
+
 /* --- Main content --- */
 
 .container {
@@ -251,14 +290,6 @@ body {
 
 /* --- Livre d'or (guestbook) --- */
 
-.guestbook {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 0 1.5rem 2rem;
-  position: relative;
-  z-index: 1;
-}
-
 .guestbook-title {
   font-family: 'Caveat', cursive;
   font-size: 2.2rem;
@@ -419,29 +450,26 @@ body {
   color: #c62828;
 }
 
-/* Divider */
-
-.section-divider {
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(to right, #f8bbd0, #ce93d8, #f8bbd0);
-  margin: 2rem auto;
-  border-radius: 2px;
-}
-
 /* --- Responsive --- */
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
+  .two-columns {
+    flex-direction: column;
+    padding: 0 1rem 2rem;
+  }
+
+  .col-right {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+
   .header h1 {
     font-size: 2.3rem;
   }
 
   .header .subtitle {
     font-size: 1rem;
-  }
-
-  .container {
-    padding: 0 1rem 2rem;
   }
 
   .timeline {
@@ -459,10 +487,6 @@ body {
 
   .update-title {
     font-size: 1.15rem;
-  }
-
-  .guestbook {
-    padding: 0 1rem 2rem;
   }
 
   .guestbook-title {

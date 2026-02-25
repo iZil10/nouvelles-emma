@@ -18,36 +18,38 @@
     <p class="subtitle">Un petit coin pour vous tenir au courant</p>
   </header>
 
-  <!-- Contenu principal -->
-  <main class="container">
-    <div class="info-banner">
-      Cette page est mise a jour regulierement pour vous donner
-      des nouvelles d'Emma. Revenez de temps en temps !
-    </div>
+  <!-- Contenu principal : 2 colonnes -->
+  <div class="two-columns">
 
-    <div class="timeline" id="timeline">
-      <!-- Les nouvelles sont ajoutees ici automatiquement -->
-    </div>
-  </main>
+    <!-- Colonne gauche : Historique -->
+    <main class="col-left">
+      <div class="info-banner">
+        Cette page est mise a jour regulierement pour vous donner
+        des nouvelles d'Emma. Revenez de temps en temps !
+      </div>
 
-  <!-- Separateur -->
-  <div class="section-divider"></div>
+      <div class="timeline" id="timeline">
+        <!-- Les nouvelles sont ajoutees ici automatiquement -->
+      </div>
+    </main>
 
-  <!-- Livre d'or -->
-  <section class="guestbook">
-    <h2 class="guestbook-title">Un petit mot pour Emma</h2>
+    <!-- Colonne droite : Livre d'or -->
+    <section class="col-right">
+      <h2 class="guestbook-title">Un petit mot pour Emma</h2>
 
-    <form class="guestbook-form" id="guestbook-form">
-      <div class="form-feedback" id="form-feedback"></div>
-      <input type="text" id="msg-name" placeholder="Ton prenom" maxlength="50" required>
-      <textarea id="msg-text" placeholder="Un petit mot d'encouragement..." maxlength="500" required></textarea>
-      <button type="submit" id="msg-submit">Envoyer</button>
-    </form>
+      <form class="guestbook-form" id="guestbook-form">
+        <div class="form-feedback" id="form-feedback"></div>
+        <input type="text" id="msg-name" placeholder="Ton prenom" maxlength="50" required>
+        <textarea id="msg-text" placeholder="Un petit mot d'encouragement..." maxlength="500" required></textarea>
+        <button type="submit" id="msg-submit">Envoyer</button>
+      </form>
 
-    <div class="guestbook-messages" id="guestbook-messages">
-      <div class="guestbook-loading">Chargement des messages...</div>
-    </div>
-  </section>
+      <div class="guestbook-messages" id="guestbook-messages">
+        <div class="guestbook-loading">Chargement des messages...</div>
+      </div>
+    </section>
+
+  </div>
 
   <!-- Pied de page -->
   <footer class="footer">
