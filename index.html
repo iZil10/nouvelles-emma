@@ -51,9 +51,52 @@
 
   </div>
 
+  <!-- Panneau admin (cache) -->
+  <div class="admin-overlay" id="admin-overlay">
+    <div class="admin-panel">
+      <button class="admin-close" id="admin-close">&times;</button>
+      <h2 class="admin-title">Espace admin</h2>
+
+      <!-- Etape 1 : Code PIN -->
+      <div class="admin-pin-section" id="admin-pin-section">
+        <p style="color:#7b5b6e; margin-bottom:0.8rem;">Entre ton code :</p>
+        <input type="password" class="admin-pin-input" id="admin-pin" maxlength="6" inputmode="numeric" autocomplete="off">
+        <div class="admin-pin-error" id="admin-pin-error">Code incorrect</div>
+      </div>
+
+      <!-- Etape 2 : Formulaire nouvelle -->
+      <form class="admin-form" id="admin-form">
+        <label>Emoji</label>
+        <div class="admin-emoji-picker" id="admin-emoji-picker">
+          <button type="button" class="admin-emoji-btn selected" data-emoji="💛">💛</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="🏥">🏥</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="💪">💪</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="🌸">🌸</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="✨">✨</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="🎉">🎉</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="😊">😊</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="🌈">🌈</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="❤️">❤️</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="🐱">🐱</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="☀️">☀️</button>
+          <button type="button" class="admin-emoji-btn" data-emoji="🌻">🌻</button>
+        </div>
+
+        <label>Titre</label>
+        <input type="text" id="admin-titre" placeholder="Ex: Bonne nouvelle !" maxlength="100" required>
+
+        <label>Contenu</label>
+        <textarea id="admin-contenu" placeholder="Ecris ta nouvelle ici..." maxlength="2000" required></textarea>
+
+        <button type="submit" class="admin-submit" id="admin-submit">Publier la nouvelle</button>
+        <div class="admin-feedback" id="admin-feedback"></div>
+      </form>
+    </div>
+  </div>
+
   <!-- Pied de page -->
   <footer class="footer">
-    Fait avec <span class="heart">&#10084;</span> pour Emma
+    Fait avec <span class="heart" id="admin-trigger">&#10084;</span> pour Emma
   </footer>
 
   <!-- Firebase SDK -->
@@ -65,16 +108,46 @@
   <script src="updates.js"></script>
 
   <script>
-    // --- Afficher les nouvelles ---
+    var db, updatesRef, messagesRef;
+    var ADMIN_PIN = '012139';
+    var firebaseUpdates = [];
+
+    // --- Protection XSS ---
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- Formater la date ---
+    function formatDate(timestamp) {
+      var d = new Date(timestamp);
+      var mois = ['jan', 'fev', 'mars', 'avril', 'mai', 'juin',
+                  'juil', 'aout', 'sept', 'oct', 'nov', 'dec'];
+      return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear()
+             + ' a ' + d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    function formatDateShort(timestamp) {
+      var d = new Date(timestamp);
+      var mois = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
+                  'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+      return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    // --- Afficher les nouvelles (statiques + Firebase) ---
     function renderUpdates() {
       var timeline = document.getElementById('timeline');
 
-      if (!UPDATES || UPDATES.length === 0) {
+      // Fusionner les nouvelles statiques et Firebase
+      var allUpdates = firebaseUpdates.concat(UPDATES || []);
+
+      if (allUpdates.length === 0) {
         timeline.innerHTML = '<div class="empty-state">Pas encore de nouvelles... Revenez bientot !</div>';
         return;
       }
 
-      timeline.innerHTML = UPDATES.map(function(update) {
+      timeline.innerHTML = allUpdates.map(function(update) {
         return '<article class="update-card">' +
           '<div class="update-date">' + escapeHtml(update.date) + '</div>' +
           '<h2 class="update-title"><span class="emoji">' + update.emoji + '</span>' + escapeHtml(update.titre) + '</h2>' +
@@ -100,37 +173,45 @@
       }
     }
 
-    // --- Protection XSS ---
-    function escapeHtml(text) {
-      var div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // --- Formater la date ---
-    function formatDate(timestamp) {
-      var d = new Date(timestamp);
-      var mois = ['jan', 'fev', 'mars', 'avril', 'mai', 'juin',
-                  'juil', 'aout', 'sept', 'oct', 'nov', 'dec'];
-      return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear()
-             + ' a ' + d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0');
-    }
-
-    // --- Livre d'or (Firebase) ---
-    function initGuestbook() {
-      // Verifier que Firebase est configure
+    // --- Init Firebase ---
+    function initFirebase() {
       if (!firebaseConfig || firebaseConfig.apiKey === 'REMPLACE_MOI') {
         document.getElementById('guestbook-messages').innerHTML =
           '<div class="guestbook-empty">Le livre d\'or sera disponible bientot !</div>';
         return;
       }
 
-      // Initialiser Firebase
       firebase.initializeApp(firebaseConfig);
-      var db = firebase.database();
-      var messagesRef = db.ref('messages');
+      db = firebase.database();
+      messagesRef = db.ref('messages');
+      updatesRef = db.ref('updates');
 
-      // Ecouter les messages en temps reel
+      initUpdatesListener();
+      initGuestbook();
+    }
+
+    // --- Ecouter les nouvelles Firebase ---
+    function initUpdatesListener() {
+      updatesRef.orderByChild('timestamp').on('value', function(snapshot) {
+        firebaseUpdates = [];
+        snapshot.forEach(function(child) {
+          var u = child.val();
+          firebaseUpdates.push({
+            date: formatDateShort(u.timestamp),
+            emoji: u.emoji,
+            titre: u.titre,
+            contenu: u.contenu,
+            timestamp: u.timestamp
+          });
+        });
+        // Plus recentes en premier
+        firebaseUpdates.reverse();
+        renderUpdates();
+      });
+    }
+
+    // --- Livre d'or ---
+    function initGuestbook() {
       messagesRef.orderByChild('timestamp').on('value', function(snapshot) {
         var container = document.getElementById('guestbook-messages');
         var messages = [];
@@ -139,7 +220,6 @@
           messages.push(child.val());
         });
 
-        // Plus recents en premier
         messages.reverse();
 
         if (messages.length === 0) {
@@ -158,18 +238,14 @@
         }).join('');
       });
 
-      // Envoyer un message
       document.getElementById('guestbook-form').addEventListener('submit', function(e) {
         e.preventDefault();
-
         var nameInput = document.getElementById('msg-name');
         var textInput = document.getElementById('msg-text');
         var submitBtn = document.getElementById('msg-submit');
         var feedback = document.getElementById('form-feedback');
-
         var name = nameInput.value.trim();
         var text = textInput.value.trim();
-
         if (!name || !text) return;
 
         submitBtn.disabled = true;
@@ -186,10 +262,7 @@
           feedback.textContent = 'Merci pour ton message !';
           submitBtn.disabled = false;
           submitBtn.textContent = 'Envoyer';
-
-          setTimeout(function() {
-            feedback.className = 'form-feedback';
-          }, 3000);
+          setTimeout(function() { feedback.className = 'form-feedback'; }, 3000);
         }).catch(function() {
           feedback.className = 'form-feedback error';
           feedback.textContent = 'Oups, erreur... Reessaie !';
@@ -199,10 +272,102 @@
       });
     }
 
+    // --- Admin panel ---
+    function initAdmin() {
+      var overlay = document.getElementById('admin-overlay');
+      var trigger = document.getElementById('admin-trigger');
+      var closeBtn = document.getElementById('admin-close');
+      var pinInput = document.getElementById('admin-pin');
+      var pinError = document.getElementById('admin-pin-error');
+      var pinSection = document.getElementById('admin-pin-section');
+      var adminForm = document.getElementById('admin-form');
+      var selectedEmoji = '\u{1F49B}';
+
+      // Ouvrir le panneau en cliquant sur le coeur
+      trigger.addEventListener('click', function() {
+        overlay.classList.add('visible');
+        pinInput.value = '';
+        pinError.style.display = 'none';
+        pinSection.style.display = 'block';
+        adminForm.classList.remove('visible');
+        setTimeout(function() { pinInput.focus(); }, 100);
+      });
+
+      // Fermer
+      closeBtn.addEventListener('click', function() {
+        overlay.classList.remove('visible');
+      });
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.classList.remove('visible');
+      });
+
+      // Verification du code PIN
+      pinInput.addEventListener('input', function() {
+        if (pinInput.value.length >= 6) {
+          if (pinInput.value === ADMIN_PIN) {
+            pinSection.style.display = 'none';
+            adminForm.classList.add('visible');
+          } else {
+            pinError.style.display = 'block';
+            pinInput.value = '';
+          }
+        }
+      });
+
+      // Selection d'emoji
+      document.getElementById('admin-emoji-picker').addEventListener('click', function(e) {
+        var btn = e.target.closest('.admin-emoji-btn');
+        if (!btn) return;
+        document.querySelectorAll('.admin-emoji-btn').forEach(function(b) {
+          b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+        selectedEmoji = btn.dataset.emoji;
+      });
+
+      // Publier une nouvelle
+      adminForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var titre = document.getElementById('admin-titre').value.trim();
+        var contenu = document.getElementById('admin-contenu').value.trim();
+        var submitBtn = document.getElementById('admin-submit');
+        var feedback = document.getElementById('admin-feedback');
+
+        if (!titre || !contenu || !updatesRef) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publication...';
+
+        updatesRef.push({
+          emoji: selectedEmoji,
+          titre: titre,
+          contenu: contenu,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        }).then(function() {
+          document.getElementById('admin-titre').value = '';
+          document.getElementById('admin-contenu').value = '';
+          feedback.className = 'admin-feedback success';
+          feedback.textContent = 'Nouvelle publiee !';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publier la nouvelle';
+          setTimeout(function() {
+            feedback.className = 'admin-feedback';
+            overlay.classList.remove('visible');
+          }, 1500);
+        }).catch(function() {
+          feedback.className = 'admin-feedback error';
+          feedback.textContent = 'Erreur... Reessaie !';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publier la nouvelle';
+        });
+      });
+    }
+
     // --- Lancer ---
     renderUpdates();
     createHearts();
-    initGuestbook();
+    initFirebase();
+    initAdmin();
   </script>
 
 </body>
