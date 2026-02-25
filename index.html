@@ -148,12 +148,26 @@
       }
 
       timeline.innerHTML = allUpdates.map(function(update) {
+        var deleteBtn = update.firebaseKey
+          ? '<button class="update-delete" data-key="' + update.firebaseKey + '" title="Supprimer">&times;</button>'
+          : '';
         return '<article class="update-card">' +
+          deleteBtn +
           '<div class="update-date">' + escapeHtml(update.date) + '</div>' +
           '<h2 class="update-title"><span class="emoji">' + update.emoji + '</span>' + escapeHtml(update.titre) + '</h2>' +
           '<div class="update-content">' + escapeHtml(update.contenu) + '</div>' +
         '</article>';
       }).join('');
+
+      // Gestion des clics sur supprimer
+      timeline.querySelectorAll('.update-delete').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var key = btn.dataset.key;
+          if (confirm('Supprimer cette nouvelle ?')) {
+            updatesRef.child(key).remove();
+          }
+        });
+      });
     }
 
     // --- Petits coeurs flottants ---
@@ -197,6 +211,7 @@
         snapshot.forEach(function(child) {
           var u = child.val();
           firebaseUpdates.push({
+            firebaseKey: child.key,
             date: formatDateShort(u.timestamp),
             emoji: u.emoji,
             titre: u.titre,
@@ -307,6 +322,7 @@
           if (pinInput.value === ADMIN_PIN) {
             pinSection.style.display = 'none';
             adminForm.classList.add('visible');
+            document.body.classList.add('admin-mode');
           } else {
             pinError.style.display = 'block';
             pinInput.value = '';

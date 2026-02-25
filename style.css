@@ -650,6 +650,34 @@ body {
   cursor: pointer;
 }
 
+/* Delete button on update cards (admin only) */
+
+.update-delete {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  background: rgba(198, 40, 40, 0.08);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+  color: #c62828;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.update-delete:hover {
+  background: rgba(198, 40, 40, 0.2);
+}
+
+body.admin-mode .update-delete {
+  display: flex;
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 900px) {
