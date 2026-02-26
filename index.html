@@ -329,12 +329,23 @@
         btn.addEventListener('click', function() {
           var key = btn.dataset.key;
           if (isLiked(key)) return;
-          markAsLiked(key);
-          if (newsLikesRef) {
-            newsLikesRef.child(key).transaction(function(current) {
-              return (current || 0) + 1;
-            });
-          }
+          if (!newsLikesRef) return;
+          // Feedback visuel immediat
+          btn.classList.add('liked');
+          btn.querySelector('.like-heart').textContent = '\u2764\uFE0F';
+          btn.style.pointerEvents = 'none';
+          newsLikesRef.child(key).transaction(function(current) {
+            return (current || 0) + 1;
+          }).then(function(result) {
+            if (result.committed) {
+              markAsLiked(key);
+            }
+          }).catch(function() {
+            // Rollback visuel si echec
+            btn.classList.remove('liked');
+            btn.querySelector('.like-heart').textContent = '\u{1F90D}';
+            btn.style.pointerEvents = '';
+          });
         });
       });
 
