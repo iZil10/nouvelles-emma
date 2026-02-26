@@ -6,7 +6,7 @@
 
 const UPDATES = [
   {
-    date: "25 fevrier 2026",
+    timestamp: new Date(2026, 1, 25, 17, 30).getTime(),
     emoji: "🏥",
     titre: "Operation en cours",
     contenu: `Vers 1h30, Emma est partie se faire operer du femur 💪 Je ne sais pas s'ils allaient operer aussi d'autres fractures en meme temps.
@@ -19,7 +19,7 @@ Merci pour vos messages, ca fait chaud au coeur 💛`
   },
 
   {
-    date: "25 fevrier 2026",
+    timestamp: new Date(2026, 1, 25, 10, 0).getTime(),
     emoji: "💛",
     titre: "Premiere nouvelle !",
     contenu: `Coucou a tous ! Ce petit site est la pour vous donner des nouvelles d'Emma sans que je spamme vos messages.

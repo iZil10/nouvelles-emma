@@ -149,7 +149,8 @@
       var d = new Date(timestamp);
       var mois = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
                   'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
-      return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+      return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear()
+             + ' a ' + d.getHours() + 'h' + String(d.getMinutes()).padStart(2, '0');
     }
 
     // --- Likes helpers (localStorage) ---
@@ -220,6 +221,9 @@
         var copy = {};
         for (var k in u) copy[k] = u[k];
         copy.staticKey = 'static-' + slugify(u.titre);
+        if (u.timestamp) {
+          copy.date = formatDateShort(u.timestamp);
+        }
         return copy;
       });
 
@@ -334,12 +338,9 @@
           btn.classList.add('liked');
           btn.querySelector('.like-heart').textContent = '\u2764\uFE0F';
           btn.style.pointerEvents = 'none';
-          newsLikesRef.child(key).transaction(function(current) {
-            return (current || 0) + 1;
-          }).then(function(result) {
-            if (result.committed) {
-              markAsLiked(key);
-            }
+          var currentCount = allNewsLikes[key] || 0;
+          newsLikesRef.child(key).set(currentCount + 1).then(function() {
+            markAsLiked(key);
           }).catch(function() {
             // Rollback visuel si echec
             btn.classList.remove('liked');
