@@ -121,11 +121,12 @@
   <script src="updates.js"></script>
 
   <script>
-    var db, updatesRef, messagesRef, repliesRef, newsCommentsRef, storage, storageRef;
+    var db, updatesRef, messagesRef, repliesRef, newsCommentsRef, newsLikesRef, storage, storageRef;
     var ADMIN_PIN = '012139';
     var firebaseUpdates = [];
     var allReplies = {};
     var allNewsComments = {};
+    var allNewsLikes = {};
     var renderUpdatesTimer = null;
 
     // --- Protection XSS ---
@@ -199,6 +200,11 @@
       } catch(e) {}
     }
 
+    // --- Slugify pour cles stables ---
+    function slugify(str) {
+      return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 30);
+    }
+
     // --- Debounce renderUpdates ---
     function scheduleRenderUpdates() {
       clearTimeout(renderUpdatesTimer);
@@ -208,7 +214,16 @@
     // --- Afficher les nouvelles (statiques + Firebase) ---
     function renderUpdates() {
       var timeline = document.getElementById('timeline');
-      var allUpdates = firebaseUpdates.concat(UPDATES || []);
+
+      // Ajouter une cle stable aux nouvelles statiques
+      var staticUpdates = (UPDATES || []).map(function(u) {
+        var copy = {};
+        for (var k in u) copy[k] = u[k];
+        copy.staticKey = 'static-' + slugify(u.titre);
+        return copy;
+      });
+
+      var allUpdates = firebaseUpdates.concat(staticUpdates);
 
       if (allUpdates.length === 0) {
         timeline.innerHTML = '<div class="empty-state">Pas encore de nouvelles... Revenez bientot !</div>';
@@ -217,8 +232,9 @@
 
       timeline.innerHTML = allUpdates.map(function(update) {
         var isFirebase = !!update.firebaseKey;
+        var key = update.firebaseKey || update.staticKey;
 
-        // Bouton supprimer (admin)
+        // Bouton supprimer (admin, Firebase uniquement)
         var deleteBtn = isFirebase
           ? '<button class="update-delete" data-key="' + update.firebaseKey + '" title="Supprimer">&times;</button>'
           : '';
@@ -233,67 +249,54 @@
           ? '<div class="update-photo"><img src="' + escapeHtml(update.photoUrl) + '" alt="Photo" loading="lazy"></div>'
           : '';
 
-        // Like (Firebase uniquement)
-        var likeHtml = '';
-        if (isFirebase) {
-          var liked = isLiked(update.firebaseKey);
-          var likeCount = update.likes || 0;
-          likeHtml = '<button class="update-like' + (liked ? ' liked' : '') + '" data-key="' + update.firebaseKey + '">' +
-            '<span class="like-heart">' + (liked ? '\u2764\uFE0F' : '\u{1F90D}') + '</span>' +
-            '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>' +
-          '</button>';
-        }
+        // Like (toutes les nouvelles)
+        var liked = isLiked(key);
+        var likeCount = allNewsLikes[key] || 0;
+        var likeHtml = '<button class="update-like' + (liked ? ' liked' : '') + '" data-key="' + key + '">' +
+          '<span class="like-heart">' + (liked ? '\u2764\uFE0F' : '\u{1F90D}') + '</span>' +
+          '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>' +
+        '</button>';
 
-        // Bouton commenter (Firebase uniquement)
-        var commentBtnHtml = '';
-        if (isFirebase) {
-          var comments = allNewsComments[update.firebaseKey] || [];
-          var commentCountText = comments.length > 0 ? ' (' + comments.length + ')' : '';
-          commentBtnHtml = '<button class="update-comment-toggle" data-key="' + update.firebaseKey + '">Commenter' + commentCountText + '</button>';
-        }
+        // Bouton commenter (toutes les nouvelles)
+        var comments = allNewsComments[key] || [];
+        var commentCountText = comments.length > 0 ? ' (' + comments.length + ')' : '';
+        var commentBtnHtml = '<button class="update-comment-toggle" data-key="' + key + '">Commenter' + commentCountText + '</button>';
 
-        // Bouton modifier (auteur uniquement)
+        // Bouton modifier (auteur Firebase uniquement)
         var editBtnHtml = '';
         if (isFirebase && isMyUpdate(update.firebaseKey)) {
           editBtnHtml = '<button class="update-edit-btn" data-key="' + update.firebaseKey + '">Modifier</button>';
         }
 
         // Barre d'actions
-        var actionsHtml = '';
-        if (isFirebase) {
-          actionsHtml = '<div class="update-actions">' + likeHtml + commentBtnHtml + editBtnHtml + '</div>';
+        var actionsHtml = '<div class="update-actions">' + likeHtml + commentBtnHtml + editBtnHtml + '</div>';
+
+        // Liste des commentaires + formulaire (toutes les nouvelles)
+        var commentsListHtml = '';
+        if (comments.length > 0) {
+          commentsListHtml = '<div class="news-comments-list">' +
+            comments.map(function(c) {
+              var editCommentBtn = isMyComment(c.key)
+                ? '<button class="news-comment-edit" data-updatekey="' + key + '" data-commentkey="' + c.key + '">Modifier</button>'
+                : '';
+              return '<div class="news-comment">' +
+                '<div class="news-comment-header">' +
+                  '<span class="news-comment-name">' + escapeHtml(c.name) + '</span>' +
+                  editCommentBtn +
+                  '<span class="news-comment-date">' + formatDate(c.timestamp) + '</span>' +
+                '</div>' +
+                '<div class="news-comment-text">' + escapeHtml(c.text) + '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>';
         }
 
-        // Liste des commentaires + formulaire
-        var commentsSection = '';
-        if (isFirebase) {
-          var comments = allNewsComments[update.firebaseKey] || [];
-          var commentsListHtml = '';
-          if (comments.length > 0) {
-            commentsListHtml = '<div class="news-comments-list">' +
-              comments.map(function(c) {
-                var editCommentBtn = isMyComment(c.key)
-                  ? '<button class="news-comment-edit" data-updatekey="' + update.firebaseKey + '" data-commentkey="' + c.key + '">Modifier</button>'
-                  : '';
-                return '<div class="news-comment">' +
-                  '<div class="news-comment-header">' +
-                    '<span class="news-comment-name">' + escapeHtml(c.name) + '</span>' +
-                    editCommentBtn +
-                    '<span class="news-comment-date">' + formatDate(c.timestamp) + '</span>' +
-                  '</div>' +
-                  '<div class="news-comment-text">' + escapeHtml(c.text) + '</div>' +
-                '</div>';
-              }).join('') +
-            '</div>';
-          }
-
-          commentsSection = commentsListHtml +
-            '<div class="news-comment-form" id="news-comment-form-' + update.firebaseKey + '">' +
-              '<input type="text" placeholder="Ton prenom" maxlength="50" class="news-comment-name">' +
-              '<textarea placeholder="Ton commentaire..." maxlength="500" class="news-comment-text"></textarea>' +
-              '<button type="button" class="news-comment-send" data-key="' + update.firebaseKey + '">Envoyer</button>' +
-            '</div>';
-        }
+        var commentsSection = commentsListHtml +
+          '<div class="news-comment-form" id="news-comment-form-' + key + '">' +
+            '<input type="text" placeholder="Ton prenom" maxlength="50" class="news-comment-name">' +
+            '<textarea placeholder="Ton commentaire..." maxlength="500" class="news-comment-text"></textarea>' +
+            '<button type="button" class="news-comment-send" data-key="' + key + '">Envoyer</button>' +
+          '</div>';
 
         return '<article class="update-card">' +
           deleteBtn +
@@ -309,26 +312,29 @@
 
       // --- Event listeners ---
 
-      // Supprimer
+      // Supprimer (Firebase uniquement)
       timeline.querySelectorAll('.update-delete').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var key = btn.dataset.key;
           if (confirm('Supprimer cette nouvelle ?')) {
             updatesRef.child(key).remove();
             if (newsCommentsRef) newsCommentsRef.child(key).remove();
+            if (newsLikesRef) newsLikesRef.child(key).remove();
           }
         });
       });
 
-      // Like
+      // Like (toutes les nouvelles)
       timeline.querySelectorAll('.update-like').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var key = btn.dataset.key;
           if (isLiked(key)) return;
           markAsLiked(key);
-          updatesRef.child(key).child('likes').transaction(function(current) {
-            return (current || 0) + 1;
-          });
+          if (newsLikesRef) {
+            newsLikesRef.child(key).transaction(function(current) {
+              return (current || 0) + 1;
+            });
+          }
         });
       });
 
@@ -376,24 +382,21 @@
         });
       });
 
-      // Modifier une publication
+      // Modifier une publication (Firebase uniquement)
       timeline.querySelectorAll('.update-edit-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var key = btn.dataset.key;
           var card = btn.closest('.update-card');
 
-          // Si le formulaire existe deja, le fermer
           var existing = card.querySelector('.update-edit-form');
           if (existing) { existing.remove(); return; }
 
-          // Trouver les donnees de l'update
           var update = null;
           for (var i = 0; i < firebaseUpdates.length; i++) {
             if (firebaseUpdates[i].firebaseKey === key) { update = firebaseUpdates[i]; break; }
           }
           if (!update) return;
 
-          // Creer le formulaire d'edition
           var formDiv = document.createElement('div');
           formDiv.className = 'update-edit-form';
           formDiv.innerHTML =
@@ -440,7 +443,6 @@
           var commentDiv = btn.closest('.news-comment');
           var textDiv = commentDiv.querySelector('.news-comment-text');
 
-          // Trouver le commentaire
           var comments = allNewsComments[updateKey] || [];
           var comment = null;
           for (var i = 0; i < comments.length; i++) {
@@ -448,7 +450,6 @@
           }
           if (!comment) return;
 
-          // Remplacer le texte par un textarea
           var originalText = comment.text;
           textDiv.innerHTML =
             '<textarea class="edit-comment-textarea" maxlength="500">' + escapeHtml(originalText) + '</textarea>' +
@@ -516,6 +517,7 @@
       updatesRef = db.ref('updates');
       repliesRef = db.ref('replies');
       newsCommentsRef = db.ref('news-comments');
+      newsLikesRef = db.ref('news-likes');
 
       // Init Storage (try/catch au cas ou le service n'est pas active)
       try {
@@ -530,6 +532,7 @@
       initGuestbook();
       initRepliesListener();
       initNewsCommentsListener();
+      initNewsLikesListener();
     }
 
     // --- Ecouter les nouvelles Firebase ---
@@ -569,6 +572,17 @@
             allNewsComments[updateKey].push(c);
           });
           allNewsComments[updateKey].sort(function(a, b) { return a.timestamp - b.timestamp; });
+        });
+        scheduleRenderUpdates();
+      });
+    }
+
+    // --- Ecouter les likes ---
+    function initNewsLikesListener() {
+      newsLikesRef.on('value', function(snapshot) {
+        allNewsLikes = {};
+        snapshot.forEach(function(child) {
+          allNewsLikes[child.key] = child.val();
         });
         scheduleRenderUpdates();
       });
