@@ -1329,6 +1329,32 @@ body.admin-mode .update-delete {
   color: #7b1fa2;
 }
 
+/* --- Bouton notifications --- */
+.notif-btn {
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ec407a, #ab47bc);
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.notif-btn:hover {
+  transform: translateY(-1px);
+}
+
+.notif-btn.notif-active {
+  background: linear-gradient(135deg, #66bb6a, #43a047);
+  cursor: default;
+  pointer-events: none;
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 900px) {
