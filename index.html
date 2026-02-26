@@ -121,7 +121,7 @@
   <script src="updates.js"></script>
 
   <script>
-    var db, updatesRef, messagesRef, repliesRef, newsCommentsRef, newsLikesRef, storage, storageRef;
+    var db, updatesRef, messagesRef, repliesRef, newsCommentsRef, storage, storageRef;
     var ADMIN_PIN = '012139';
     var firebaseUpdates = [];
     var allReplies = {};
@@ -323,7 +323,6 @@
           if (confirm('Supprimer cette nouvelle ?')) {
             updatesRef.child(key).remove();
             if (newsCommentsRef) newsCommentsRef.child(key).remove();
-            if (newsLikesRef) newsLikesRef.child(key).remove();
           }
         });
       });
@@ -333,13 +332,13 @@
         btn.addEventListener('click', function() {
           var key = btn.dataset.key;
           if (isLiked(key)) return;
-          if (!newsLikesRef) return;
+          if (!updatesRef) return;
           // Feedback visuel immediat
           btn.classList.add('liked');
           btn.querySelector('.like-heart').textContent = '\u2764\uFE0F';
           btn.style.pointerEvents = 'none';
           var currentCount = allNewsLikes[key] || 0;
-          newsLikesRef.child(key).set(currentCount + 1).then(function() {
+          updatesRef.child(key).child('likes').set(currentCount + 1).then(function() {
             markAsLiked(key);
           }).catch(function() {
             // Rollback visuel si echec
@@ -529,7 +528,6 @@
       updatesRef = db.ref('updates');
       repliesRef = db.ref('replies');
       newsCommentsRef = db.ref('news-comments');
-      newsLikesRef = db.ref('news-likes');
 
       // Init Storage (try/catch au cas ou le service n'est pas active)
       try {
@@ -544,15 +542,21 @@
       initGuestbook();
       initRepliesListener();
       initNewsCommentsListener();
-      initNewsLikesListener();
     }
 
     // --- Ecouter les nouvelles Firebase ---
     function initUpdatesListener() {
       updatesRef.orderByChild('timestamp').on('value', function(snapshot) {
         firebaseUpdates = [];
+        allNewsLikes = {};
         snapshot.forEach(function(child) {
           var u = child.val();
+          // Stocker les likes de toutes les entrees (y compris les entrees de like pour nouvelles statiques)
+          if (u.likes) {
+            allNewsLikes[child.key] = u.likes;
+          }
+          // Ne garder que les vraies nouvelles (avec timestamp)
+          if (!u.timestamp) return;
           firebaseUpdates.push({
             firebaseKey: child.key,
             date: formatDateShort(u.timestamp),
@@ -584,17 +588,6 @@
             allNewsComments[updateKey].push(c);
           });
           allNewsComments[updateKey].sort(function(a, b) { return a.timestamp - b.timestamp; });
-        });
-        scheduleRenderUpdates();
-      });
-    }
-
-    // --- Ecouter les likes ---
-    function initNewsLikesListener() {
-      newsLikesRef.on('value', function(snapshot) {
-        allNewsLikes = {};
-        snapshot.forEach(function(child) {
-          allNewsLikes[child.key] = child.val();
         });
         scheduleRenderUpdates();
       });
