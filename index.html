@@ -28,6 +28,42 @@
         des nouvelles d'Emma. Revenez de temps en temps !
       </div>
 
+      <!-- Formulaire public de nouvelles -->
+      <div class="public-form-wrapper" id="public-form-wrapper">
+        <button class="public-form-toggle" id="public-form-toggle">Partager une nouvelle</button>
+        <form class="public-form" id="public-form">
+          <div class="public-form-feedback" id="public-form-feedback"></div>
+          <input type="text" id="public-name" placeholder="Ton prenom" maxlength="50" required>
+
+          <label class="public-form-label">Choisis un emoji</label>
+          <div class="public-emoji-picker" id="public-emoji-picker">
+            <button type="button" class="public-emoji-btn selected" data-emoji="💛">💛</button>
+            <button type="button" class="public-emoji-btn" data-emoji="🏥">🏥</button>
+            <button type="button" class="public-emoji-btn" data-emoji="💪">💪</button>
+            <button type="button" class="public-emoji-btn" data-emoji="🌸">🌸</button>
+            <button type="button" class="public-emoji-btn" data-emoji="✨">✨</button>
+            <button type="button" class="public-emoji-btn" data-emoji="🎉">🎉</button>
+            <button type="button" class="public-emoji-btn" data-emoji="😊">😊</button>
+            <button type="button" class="public-emoji-btn" data-emoji="🌈">🌈</button>
+            <button type="button" class="public-emoji-btn" data-emoji="❤️">❤️</button>
+            <button type="button" class="public-emoji-btn" data-emoji="🐱">🐱</button>
+            <button type="button" class="public-emoji-btn" data-emoji="☀️">☀️</button>
+            <button type="button" class="public-emoji-btn" data-emoji="🌻">🌻</button>
+          </div>
+
+          <input type="text" id="public-titre" placeholder="Titre de ta nouvelle" maxlength="100" required>
+          <textarea id="public-contenu" placeholder="Ecris ta nouvelle ici..." maxlength="2000" required></textarea>
+
+          <div class="public-photo-section">
+            <label class="public-photo-label" for="public-photo">Ajouter une photo (optionnel)</label>
+            <input type="file" id="public-photo" accept="image/*" class="public-photo-input">
+            <div class="public-photo-preview" id="public-photo-preview"></div>
+          </div>
+
+          <button type="submit" class="public-submit" id="public-submit">Publier</button>
+        </form>
+      </div>
+
       <div class="timeline" id="timeline">
         <!-- Les nouvelles sont ajoutees ici automatiquement -->
       </div>
@@ -55,42 +91,18 @@
   <div class="admin-overlay" id="admin-overlay">
     <div class="admin-panel">
       <button class="admin-close" id="admin-close">&times;</button>
-      <h2 class="admin-title">Espace admin</h2>
+      <h2 class="admin-title">Mode admin</h2>
 
-      <!-- Etape 1 : Code PIN -->
       <div class="admin-pin-section" id="admin-pin-section">
-        <p style="color:#7b5b6e; margin-bottom:0.8rem;">Entre ton code :</p>
+        <p style="color:#7b5b6e; margin-bottom:0.8rem;">Entre ton code pour activer le mode suppression :</p>
         <input type="password" class="admin-pin-input" id="admin-pin" maxlength="6" inputmode="numeric" autocomplete="off">
         <div class="admin-pin-error" id="admin-pin-error">Code incorrect</div>
       </div>
 
-      <!-- Etape 2 : Formulaire nouvelle -->
-      <form class="admin-form" id="admin-form">
-        <label>Emoji</label>
-        <div class="admin-emoji-picker" id="admin-emoji-picker">
-          <button type="button" class="admin-emoji-btn selected" data-emoji="💛">💛</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="🏥">🏥</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="💪">💪</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="🌸">🌸</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="✨">✨</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="🎉">🎉</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="😊">😊</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="🌈">🌈</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="❤️">❤️</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="🐱">🐱</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="☀️">☀️</button>
-          <button type="button" class="admin-emoji-btn" data-emoji="🌻">🌻</button>
-        </div>
-
-        <label>Titre</label>
-        <input type="text" id="admin-titre" placeholder="Ex: Bonne nouvelle !" maxlength="100" required>
-
-        <label>Contenu</label>
-        <textarea id="admin-contenu" placeholder="Ecris ta nouvelle ici..." maxlength="2000" required></textarea>
-
-        <button type="submit" class="admin-submit" id="admin-submit">Publier la nouvelle</button>
-        <div class="admin-feedback" id="admin-feedback"></div>
-      </form>
+      <div class="admin-confirmed" id="admin-confirmed" style="display:none; text-align:center;">
+        <p style="color:#2e7d32; font-weight:600;">Mode suppression active</p>
+        <p style="color:#7b5b6e; font-size:0.9rem; margin-top:0.5rem;">Les boutons supprimer sont maintenant visibles sur les nouvelles.</p>
+      </div>
     </div>
   </div>
 
@@ -102,16 +114,19 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
   <!-- Configuration Firebase + Nouvelles -->
   <script src="firebase-config.js"></script>
   <script src="updates.js"></script>
 
   <script>
-    var db, updatesRef, messagesRef, repliesRef;
+    var db, updatesRef, messagesRef, repliesRef, newsCommentsRef, storage, storageRef;
     var ADMIN_PIN = '012139';
     var firebaseUpdates = [];
     var allReplies = {};
+    var allNewsComments = {};
+    var renderUpdatesTimer = null;
 
     // --- Protection XSS ---
     function escapeHtml(text) {
@@ -136,11 +151,63 @@
       return d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
     }
 
+    // --- Likes helpers (localStorage) ---
+    function getLikedUpdates() {
+      try {
+        return JSON.parse(localStorage.getItem('emma-liked-updates') || '[]');
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function isLiked(key) {
+      return getLikedUpdates().indexOf(key) !== -1;
+    }
+
+    function markAsLiked(key) {
+      try {
+        var liked = getLikedUpdates();
+        if (liked.indexOf(key) === -1) {
+          liked.push(key);
+          localStorage.setItem('emma-liked-updates', JSON.stringify(liked));
+        }
+      } catch(e) {}
+    }
+
+    // --- Authored content helpers (localStorage) ---
+    function getMyUpdates() {
+      try { return JSON.parse(localStorage.getItem('emma-my-updates') || '[]'); }
+      catch(e) { return []; }
+    }
+    function isMyUpdate(key) { return getMyUpdates().indexOf(key) !== -1; }
+    function addMyUpdate(key) {
+      try {
+        var mine = getMyUpdates();
+        if (mine.indexOf(key) === -1) { mine.push(key); localStorage.setItem('emma-my-updates', JSON.stringify(mine)); }
+      } catch(e) {}
+    }
+
+    function getMyComments() {
+      try { return JSON.parse(localStorage.getItem('emma-my-comments') || '[]'); }
+      catch(e) { return []; }
+    }
+    function isMyComment(commentId) { return getMyComments().indexOf(commentId) !== -1; }
+    function addMyComment(commentId) {
+      try {
+        var mine = getMyComments();
+        if (mine.indexOf(commentId) === -1) { mine.push(commentId); localStorage.setItem('emma-my-comments', JSON.stringify(mine)); }
+      } catch(e) {}
+    }
+
+    // --- Debounce renderUpdates ---
+    function scheduleRenderUpdates() {
+      clearTimeout(renderUpdatesTimer);
+      renderUpdatesTimer = setTimeout(renderUpdates, 50);
+    }
+
     // --- Afficher les nouvelles (statiques + Firebase) ---
     function renderUpdates() {
       var timeline = document.getElementById('timeline');
-
-      // Fusionner les nouvelles statiques et Firebase
       var allUpdates = firebaseUpdates.concat(UPDATES || []);
 
       if (allUpdates.length === 0) {
@@ -149,24 +216,271 @@
       }
 
       timeline.innerHTML = allUpdates.map(function(update) {
-        var deleteBtn = update.firebaseKey
+        var isFirebase = !!update.firebaseKey;
+
+        // Bouton supprimer (admin)
+        var deleteBtn = isFirebase
           ? '<button class="update-delete" data-key="' + update.firebaseKey + '" title="Supprimer">&times;</button>'
           : '';
+
+        // Auteur
+        var authorHtml = update.author
+          ? '<div class="update-author">Par ' + escapeHtml(update.author) + '</div>'
+          : '';
+
+        // Photo
+        var photoHtml = update.photoUrl
+          ? '<div class="update-photo"><img src="' + escapeHtml(update.photoUrl) + '" alt="Photo" loading="lazy"></div>'
+          : '';
+
+        // Like (Firebase uniquement)
+        var likeHtml = '';
+        if (isFirebase) {
+          var liked = isLiked(update.firebaseKey);
+          var likeCount = update.likes || 0;
+          likeHtml = '<button class="update-like' + (liked ? ' liked' : '') + '" data-key="' + update.firebaseKey + '">' +
+            '<span class="like-heart">' + (liked ? '\u2764\uFE0F' : '\u{1F90D}') + '</span>' +
+            '<span class="like-count">' + (likeCount > 0 ? likeCount : '') + '</span>' +
+          '</button>';
+        }
+
+        // Bouton commenter (Firebase uniquement)
+        var commentBtnHtml = '';
+        if (isFirebase) {
+          var comments = allNewsComments[update.firebaseKey] || [];
+          var commentCountText = comments.length > 0 ? ' (' + comments.length + ')' : '';
+          commentBtnHtml = '<button class="update-comment-toggle" data-key="' + update.firebaseKey + '">Commenter' + commentCountText + '</button>';
+        }
+
+        // Bouton modifier (auteur uniquement)
+        var editBtnHtml = '';
+        if (isFirebase && isMyUpdate(update.firebaseKey)) {
+          editBtnHtml = '<button class="update-edit-btn" data-key="' + update.firebaseKey + '">Modifier</button>';
+        }
+
+        // Barre d'actions
+        var actionsHtml = '';
+        if (isFirebase) {
+          actionsHtml = '<div class="update-actions">' + likeHtml + commentBtnHtml + editBtnHtml + '</div>';
+        }
+
+        // Liste des commentaires + formulaire
+        var commentsSection = '';
+        if (isFirebase) {
+          var comments = allNewsComments[update.firebaseKey] || [];
+          var commentsListHtml = '';
+          if (comments.length > 0) {
+            commentsListHtml = '<div class="news-comments-list">' +
+              comments.map(function(c) {
+                var editCommentBtn = isMyComment(c.key)
+                  ? '<button class="news-comment-edit" data-updatekey="' + update.firebaseKey + '" data-commentkey="' + c.key + '">Modifier</button>'
+                  : '';
+                return '<div class="news-comment">' +
+                  '<div class="news-comment-header">' +
+                    '<span class="news-comment-name">' + escapeHtml(c.name) + '</span>' +
+                    editCommentBtn +
+                    '<span class="news-comment-date">' + formatDate(c.timestamp) + '</span>' +
+                  '</div>' +
+                  '<div class="news-comment-text">' + escapeHtml(c.text) + '</div>' +
+                '</div>';
+              }).join('') +
+            '</div>';
+          }
+
+          commentsSection = commentsListHtml +
+            '<div class="news-comment-form" id="news-comment-form-' + update.firebaseKey + '">' +
+              '<input type="text" placeholder="Ton prenom" maxlength="50" class="news-comment-name">' +
+              '<textarea placeholder="Ton commentaire..." maxlength="500" class="news-comment-text"></textarea>' +
+              '<button type="button" class="news-comment-send" data-key="' + update.firebaseKey + '">Envoyer</button>' +
+            '</div>';
+        }
+
         return '<article class="update-card">' +
           deleteBtn +
           '<div class="update-date">' + escapeHtml(update.date) + '</div>' +
+          authorHtml +
           '<h2 class="update-title"><span class="emoji">' + update.emoji + '</span>' + escapeHtml(update.titre) + '</h2>' +
+          photoHtml +
           '<div class="update-content">' + escapeHtml(update.contenu) + '</div>' +
+          actionsHtml +
+          commentsSection +
         '</article>';
       }).join('');
 
-      // Gestion des clics sur supprimer
+      // --- Event listeners ---
+
+      // Supprimer
       timeline.querySelectorAll('.update-delete').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var key = btn.dataset.key;
           if (confirm('Supprimer cette nouvelle ?')) {
             updatesRef.child(key).remove();
+            if (newsCommentsRef) newsCommentsRef.child(key).remove();
           }
+        });
+      });
+
+      // Like
+      timeline.querySelectorAll('.update-like').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var key = btn.dataset.key;
+          if (isLiked(key)) return;
+          markAsLiked(key);
+          updatesRef.child(key).child('likes').transaction(function(current) {
+            return (current || 0) + 1;
+          });
+        });
+      });
+
+      // Toggle commentaires
+      timeline.querySelectorAll('.update-comment-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var key = btn.dataset.key;
+          var form = document.getElementById('news-comment-form-' + key);
+          form.classList.toggle('visible');
+          if (form.classList.contains('visible')) {
+            form.querySelector('.news-comment-name').focus();
+          }
+        });
+      });
+
+      // Envoyer commentaire
+      timeline.querySelectorAll('.news-comment-send').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var key = btn.dataset.key;
+          var form = document.getElementById('news-comment-form-' + key);
+          var nameInput = form.querySelector('.news-comment-name');
+          var textInput = form.querySelector('.news-comment-text');
+          var name = nameInput.value.trim();
+          var text = textInput.value.trim();
+          if (!name || !text) return;
+
+          btn.disabled = true;
+          btn.textContent = 'Envoi...';
+
+          newsCommentsRef.child(key).push({
+            name: name,
+            text: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          }).then(function(ref) {
+            addMyComment(ref.key);
+            nameInput.value = '';
+            textInput.value = '';
+            form.classList.remove('visible');
+            btn.disabled = false;
+            btn.textContent = 'Envoyer';
+          }).catch(function() {
+            btn.disabled = false;
+            btn.textContent = 'Envoyer';
+          });
+        });
+      });
+
+      // Modifier une publication
+      timeline.querySelectorAll('.update-edit-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var key = btn.dataset.key;
+          var card = btn.closest('.update-card');
+
+          // Si le formulaire existe deja, le fermer
+          var existing = card.querySelector('.update-edit-form');
+          if (existing) { existing.remove(); return; }
+
+          // Trouver les donnees de l'update
+          var update = null;
+          for (var i = 0; i < firebaseUpdates.length; i++) {
+            if (firebaseUpdates[i].firebaseKey === key) { update = firebaseUpdates[i]; break; }
+          }
+          if (!update) return;
+
+          // Creer le formulaire d'edition
+          var formDiv = document.createElement('div');
+          formDiv.className = 'update-edit-form';
+          formDiv.innerHTML =
+            '<input type="text" class="edit-titre" value="' + escapeHtml(update.titre).replace(/"/g, '&quot;') + '" maxlength="100">' +
+            '<textarea class="edit-contenu" maxlength="2000">' + escapeHtml(update.contenu) + '</textarea>' +
+            '<div class="edit-form-actions">' +
+              '<button type="button" class="edit-save">Enregistrer</button>' +
+              '<button type="button" class="edit-cancel">Annuler</button>' +
+            '</div>';
+          card.appendChild(formDiv);
+          formDiv.querySelector('.edit-titre').focus();
+
+          formDiv.querySelector('.edit-cancel').addEventListener('click', function() {
+            formDiv.remove();
+          });
+
+          formDiv.querySelector('.edit-save').addEventListener('click', function() {
+            var newTitre = formDiv.querySelector('.edit-titre').value.trim();
+            var newContenu = formDiv.querySelector('.edit-contenu').value.trim();
+            if (!newTitre || !newContenu) return;
+
+            var saveBtn = formDiv.querySelector('.edit-save');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Enregistrement...';
+
+            updatesRef.child(key).update({
+              titre: newTitre,
+              contenu: newContenu
+            }).then(function() {
+              formDiv.remove();
+            }).catch(function() {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Enregistrer';
+            });
+          });
+        });
+      });
+
+      // Modifier un commentaire
+      timeline.querySelectorAll('.news-comment-edit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var updateKey = btn.dataset.updatekey;
+          var commentKey = btn.dataset.commentkey;
+          var commentDiv = btn.closest('.news-comment');
+          var textDiv = commentDiv.querySelector('.news-comment-text');
+
+          // Trouver le commentaire
+          var comments = allNewsComments[updateKey] || [];
+          var comment = null;
+          for (var i = 0; i < comments.length; i++) {
+            if (comments[i].key === commentKey) { comment = comments[i]; break; }
+          }
+          if (!comment) return;
+
+          // Remplacer le texte par un textarea
+          var originalText = comment.text;
+          textDiv.innerHTML =
+            '<textarea class="edit-comment-textarea" maxlength="500">' + escapeHtml(originalText) + '</textarea>' +
+            '<div class="edit-form-actions">' +
+              '<button type="button" class="edit-comment-save">Enregistrer</button>' +
+              '<button type="button" class="edit-comment-cancel">Annuler</button>' +
+            '</div>';
+          btn.style.display = 'none';
+          textDiv.querySelector('.edit-comment-textarea').focus();
+
+          textDiv.querySelector('.edit-comment-cancel').addEventListener('click', function() {
+            textDiv.textContent = originalText;
+            btn.style.display = '';
+          });
+
+          textDiv.querySelector('.edit-comment-save').addEventListener('click', function() {
+            var newText = textDiv.querySelector('.edit-comment-textarea').value.trim();
+            if (!newText) return;
+
+            var saveBtn = textDiv.querySelector('.edit-comment-save');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Enregistrement...';
+
+            newsCommentsRef.child(updateKey).child(commentKey).update({
+              text: newText
+            }).then(function() {
+              // Le listener Firebase va re-render
+            }).catch(function() {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Enregistrer';
+            });
+          });
         });
       });
     }
@@ -201,10 +515,21 @@
       messagesRef = db.ref('messages');
       updatesRef = db.ref('updates');
       repliesRef = db.ref('replies');
+      newsCommentsRef = db.ref('news-comments');
+
+      // Init Storage (try/catch au cas ou le service n'est pas active)
+      try {
+        storage = firebase.storage();
+        storageRef = storage.ref();
+      } catch(e) {
+        storage = null;
+        storageRef = null;
+      }
 
       initUpdatesListener();
       initGuestbook();
       initRepliesListener();
+      initNewsCommentsListener();
     }
 
     // --- Ecouter les nouvelles Firebase ---
@@ -219,16 +544,37 @@
             emoji: u.emoji,
             titre: u.titre,
             contenu: u.contenu,
-            timestamp: u.timestamp
+            timestamp: u.timestamp,
+            author: u.author || '',
+            photoUrl: u.photoUrl || '',
+            likes: u.likes || 0
           });
         });
         // Plus recentes en premier
         firebaseUpdates.reverse();
-        renderUpdates();
+        scheduleRenderUpdates();
       });
     }
 
-    // --- Ecouter les reponses ---
+    // --- Ecouter les commentaires des nouvelles ---
+    function initNewsCommentsListener() {
+      newsCommentsRef.on('value', function(snapshot) {
+        allNewsComments = {};
+        snapshot.forEach(function(parentSnap) {
+          var updateKey = parentSnap.key;
+          allNewsComments[updateKey] = [];
+          parentSnap.forEach(function(commentSnap) {
+            var c = commentSnap.val();
+            c.key = commentSnap.key;
+            allNewsComments[updateKey].push(c);
+          });
+          allNewsComments[updateKey].sort(function(a, b) { return a.timestamp - b.timestamp; });
+        });
+        scheduleRenderUpdates();
+      });
+    }
+
+    // --- Ecouter les reponses du livre d'or ---
     function initRepliesListener() {
       repliesRef.on('value', function(snapshot) {
         allReplies = {};
@@ -238,14 +584,13 @@
           parentSnap.forEach(function(replySnap) {
             allReplies[parentId].push(replySnap.val());
           });
-          // Trier par date
           allReplies[parentId].sort(function(a, b) { return a.timestamp - b.timestamp; });
         });
         renderMessages();
       });
     }
 
-    // --- Afficher les messages ---
+    // --- Afficher les messages du livre d'or ---
     function renderMessages() {
       var container = document.getElementById('guestbook-messages');
       if (!window._guestbookMessages || window._guestbookMessages.length === 0) {
@@ -385,7 +730,144 @@
       });
     }
 
-    // --- Admin panel ---
+    // --- Formulaire public de nouvelles ---
+    function initPublicForm() {
+      var toggle = document.getElementById('public-form-toggle');
+      var form = document.getElementById('public-form');
+      var selectedEmoji = '\u{1F49B}';
+      var photoFile = null;
+
+      // Toggle formulaire
+      toggle.addEventListener('click', function() {
+        form.classList.toggle('visible');
+        toggle.textContent = form.classList.contains('visible') ? 'Annuler' : 'Partager une nouvelle';
+      });
+
+      // Emoji picker
+      document.getElementById('public-emoji-picker').addEventListener('click', function(e) {
+        var btn = e.target.closest('.public-emoji-btn');
+        if (!btn) return;
+        document.querySelectorAll('.public-emoji-btn').forEach(function(b) {
+          b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+        selectedEmoji = btn.dataset.emoji;
+      });
+
+      // Photo preview
+      var photoInput = document.getElementById('public-photo');
+      var photoPreview = document.getElementById('public-photo-preview');
+
+      photoInput.addEventListener('change', function() {
+        photoPreview.innerHTML = '';
+        photoFile = null;
+        if (photoInput.files && photoInput.files[0]) {
+          var file = photoInput.files[0];
+          // Valider le type
+          if (!file.type.startsWith('image/')) {
+            photoPreview.innerHTML = '<div class="photo-error">Ce fichier n\'est pas une image.</div>';
+            photoInput.value = '';
+            return;
+          }
+          // Valider la taille (5 Mo)
+          if (file.size > 5 * 1024 * 1024) {
+            photoPreview.innerHTML = '<div class="photo-error">L\'image est trop lourde (max 5 Mo).</div>';
+            photoInput.value = '';
+            return;
+          }
+          photoFile = file;
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            photoPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview"><button type="button" class="photo-remove">Retirer</button>';
+            photoPreview.querySelector('.photo-remove').addEventListener('click', function() {
+              photoFile = null;
+              photoInput.value = '';
+              photoPreview.innerHTML = '';
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Soumission du formulaire
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var nameInput = document.getElementById('public-name');
+        var titreInput = document.getElementById('public-titre');
+        var contenuInput = document.getElementById('public-contenu');
+        var submitBtn = document.getElementById('public-submit');
+        var feedback = document.getElementById('public-form-feedback');
+
+        var name = nameInput.value.trim();
+        var titre = titreInput.value.trim();
+        var contenu = contenuInput.value.trim();
+        if (!name || !titre || !contenu || !updatesRef) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publication...';
+
+        function publishUpdate(photoUrl) {
+          var data = {
+            emoji: selectedEmoji,
+            titre: titre,
+            contenu: contenu,
+            author: name,
+            likes: 0,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          };
+          if (photoUrl) data.photoUrl = photoUrl;
+
+          updatesRef.push(data).then(function(ref) {
+            addMyUpdate(ref.key);
+            nameInput.value = '';
+            titreInput.value = '';
+            contenuInput.value = '';
+            photoFile = null;
+            photoInput.value = '';
+            photoPreview.innerHTML = '';
+            // Reset emoji
+            document.querySelectorAll('.public-emoji-btn').forEach(function(b) { b.classList.remove('selected'); });
+            document.querySelector('.public-emoji-btn').classList.add('selected');
+            selectedEmoji = '\u{1F49B}';
+
+            feedback.className = 'public-form-feedback success';
+            feedback.textContent = 'Nouvelle publiee !';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publier';
+            setTimeout(function() {
+              feedback.className = 'public-form-feedback';
+              form.classList.remove('visible');
+              toggle.textContent = 'Partager une nouvelle';
+            }, 2000);
+          }).catch(function() {
+            feedback.className = 'public-form-feedback error';
+            feedback.textContent = 'Erreur... Reessaie !';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publier';
+          });
+        }
+
+        // Upload photo si presente
+        if (photoFile && storage) {
+          var filename = Date.now() + '_' + photoFile.name;
+          var ref = storageRef.child('news-photos/' + filename);
+          ref.put(photoFile).then(function(snapshot) {
+            return snapshot.ref.getDownloadURL();
+          }).then(function(url) {
+            publishUpdate(url);
+          }).catch(function() {
+            feedback.className = 'public-form-feedback error';
+            feedback.textContent = 'Erreur lors de l\'upload de la photo.';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publier';
+          });
+        } else {
+          publishUpdate(null);
+        }
+      });
+    }
+
+    // --- Admin panel (PIN pour mode suppression uniquement) ---
     function initAdmin() {
       var overlay = document.getElementById('admin-overlay');
       var trigger = document.getElementById('admin-trigger');
@@ -393,8 +875,7 @@
       var pinInput = document.getElementById('admin-pin');
       var pinError = document.getElementById('admin-pin-error');
       var pinSection = document.getElementById('admin-pin-section');
-      var adminForm = document.getElementById('admin-form');
-      var selectedEmoji = '\u{1F49B}';
+      var confirmed = document.getElementById('admin-confirmed');
 
       // Ouvrir le panneau en cliquant sur le coeur
       trigger.addEventListener('click', function() {
@@ -402,7 +883,8 @@
         pinInput.value = '';
         pinError.style.display = 'none';
         pinSection.style.display = 'block';
-        adminForm.classList.remove('visible');
+        confirmed.style.display = 'none';
+        document.body.classList.remove('admin-mode');
         setTimeout(function() { pinInput.focus(); }, 100);
       });
 
@@ -419,7 +901,7 @@
         if (pinInput.value.length >= 6) {
           if (pinInput.value === ADMIN_PIN) {
             pinSection.style.display = 'none';
-            adminForm.classList.add('visible');
+            confirmed.style.display = 'block';
             document.body.classList.add('admin-mode');
           } else {
             pinError.style.display = 'block';
@@ -427,60 +909,13 @@
           }
         }
       });
-
-      // Selection d'emoji
-      document.getElementById('admin-emoji-picker').addEventListener('click', function(e) {
-        var btn = e.target.closest('.admin-emoji-btn');
-        if (!btn) return;
-        document.querySelectorAll('.admin-emoji-btn').forEach(function(b) {
-          b.classList.remove('selected');
-        });
-        btn.classList.add('selected');
-        selectedEmoji = btn.dataset.emoji;
-      });
-
-      // Publier une nouvelle
-      adminForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        var titre = document.getElementById('admin-titre').value.trim();
-        var contenu = document.getElementById('admin-contenu').value.trim();
-        var submitBtn = document.getElementById('admin-submit');
-        var feedback = document.getElementById('admin-feedback');
-
-        if (!titre || !contenu || !updatesRef) return;
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Publication...';
-
-        updatesRef.push({
-          emoji: selectedEmoji,
-          titre: titre,
-          contenu: contenu,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        }).then(function() {
-          document.getElementById('admin-titre').value = '';
-          document.getElementById('admin-contenu').value = '';
-          feedback.className = 'admin-feedback success';
-          feedback.textContent = 'Nouvelle publiee !';
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Publier la nouvelle';
-          setTimeout(function() {
-            feedback.className = 'admin-feedback';
-            overlay.classList.remove('visible');
-          }, 1500);
-        }).catch(function() {
-          feedback.className = 'admin-feedback error';
-          feedback.textContent = 'Erreur... Reessaie !';
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Publier la nouvelle';
-        });
-      });
     }
 
     // --- Lancer ---
     renderUpdates();
     createHearts();
     initFirebase();
+    initPublicForm();
     initAdmin();
   </script>
 

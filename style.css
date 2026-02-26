@@ -814,6 +814,521 @@ body.admin-mode .update-delete {
   display: flex;
 }
 
+/* --- Public news form --- */
+
+.public-form-wrapper {
+  margin-bottom: 2rem;
+}
+
+.public-form-toggle {
+  display: block;
+  width: 100%;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ec407a, #ab47bc);
+  border: none;
+  border-radius: 16px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.public-form-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(173, 20, 87, 0.25);
+}
+
+.public-form {
+  display: none;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(206, 147, 216, 0.15);
+  box-shadow: 0 4px 20px rgba(173, 20, 87, 0.06);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.public-form.visible {
+  display: block;
+}
+
+.public-form input[type="text"],
+.public-form textarea {
+  width: 100%;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  color: #5d4037;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.public-form input[type="text"]:focus,
+.public-form textarea:focus {
+  border-color: #ce93d8;
+  box-shadow: 0 0 0 3px rgba(206, 147, 216, 0.15);
+}
+
+.public-form input[type="text"]::placeholder,
+.public-form textarea::placeholder {
+  color: #b07daa;
+}
+
+.public-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.public-form-label {
+  display: block;
+  font-weight: 600;
+  color: #7b1fa2;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.public-emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.public-emoji-btn {
+  font-size: 1.3rem;
+  background: rgba(243, 229, 245, 0.3);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.public-emoji-btn:hover {
+  background: rgba(206, 147, 216, 0.2);
+}
+
+.public-emoji-btn.selected {
+  border-color: #ab47bc;
+  background: rgba(206, 147, 216, 0.25);
+}
+
+.public-photo-section {
+  margin-bottom: 0.8rem;
+}
+
+.public-photo-label {
+  display: inline-block;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7b5b6e;
+  cursor: pointer;
+  margin-bottom: 0.4rem;
+}
+
+.public-photo-input {
+  display: block;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  color: #5d4037;
+  margin-top: 0.3rem;
+}
+
+.public-photo-preview {
+  margin-top: 0.5rem;
+}
+
+.public-photo-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.photo-remove {
+  display: block;
+  margin-top: 0.4rem;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.8rem;
+  color: #c62828;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.photo-error {
+  color: #c62828;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.public-submit {
+  display: block;
+  width: 100%;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ec407a, #ab47bc);
+  border: none;
+  border-radius: 12px;
+  padding: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.public-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(173, 20, 87, 0.25);
+}
+
+.public-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.public-form-feedback {
+  text-align: center;
+  padding: 0.6rem;
+  border-radius: 10px;
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: none;
+}
+
+.public-form-feedback.success {
+  display: block;
+  background: rgba(200, 230, 201, 0.7);
+  color: #2e7d32;
+}
+
+.public-form-feedback.error {
+  display: block;
+  background: rgba(255, 205, 210, 0.7);
+  color: #c62828;
+}
+
+/* --- Update card extras (author, photo, actions) --- */
+
+.update-author {
+  font-size: 0.82rem;
+  color: #b07daa;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.update-photo {
+  margin: 0.8rem 0;
+}
+
+.update-photo img {
+  max-width: 100%;
+  border-radius: 12px;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+.update-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(206, 147, 216, 0.12);
+}
+
+.update-like {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #b07daa;
+  padding: 0.3rem 0;
+  transition: transform 0.15s ease;
+}
+
+.update-like:hover {
+  transform: scale(1.1);
+}
+
+.update-like.liked {
+  color: #ec407a;
+}
+
+.like-heart {
+  font-size: 1.1rem;
+}
+
+.like-count {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.update-comment-toggle {
+  background: none;
+  border: none;
+  color: #b07daa;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  transition: color 0.15s ease;
+}
+
+.update-comment-toggle:hover {
+  color: #7b1fa2;
+}
+
+/* --- News comments --- */
+
+.news-comments-list {
+  margin-top: 0.6rem;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(206, 147, 216, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.news-comment {
+  padding: 0.4rem 0;
+}
+
+.news-comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.1rem;
+}
+
+.news-comment-name {
+  font-weight: 700;
+  color: #ab47bc;
+  font-size: 0.85rem;
+}
+
+.news-comment-date {
+  font-size: 0.7rem;
+  color: #b07daa;
+}
+
+.news-comment-text {
+  color: #5d4037;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.news-comment-form {
+  display: none;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(206, 147, 216, 0.15);
+}
+
+.news-comment-form.visible {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.news-comment-form input {
+  flex: 0 0 30%;
+  min-width: 80px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  color: #5d4037;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  outline: none;
+}
+
+.news-comment-form textarea {
+  flex: 1 1 100%;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  color: #5d4037;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  outline: none;
+  resize: vertical;
+  min-height: 50px;
+}
+
+.news-comment-form input:focus,
+.news-comment-form textarea:focus {
+  border-color: #ce93d8;
+}
+
+.news-comment-form button {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ec407a, #ab47bc);
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.news-comment-form button:hover {
+  transform: translateY(-1px);
+}
+
+.news-comment-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- Edit buttons & forms --- */
+
+.update-edit-btn {
+  background: none;
+  border: none;
+  color: #b07daa;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  margin-left: auto;
+  transition: color 0.15s ease;
+}
+
+.update-edit-btn:hover {
+  color: #7b1fa2;
+}
+
+.update-edit-form {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(206, 147, 216, 0.15);
+  animation: fadeInUp 0.2s ease both;
+}
+
+.update-edit-form input,
+.update-edit-form textarea,
+.edit-comment-textarea {
+  width: 100%;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.95rem;
+  color: #5d4037;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.update-edit-form input:focus,
+.update-edit-form textarea:focus,
+.edit-comment-textarea:focus {
+  border-color: #ce93d8;
+}
+
+.update-edit-form textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-comment-textarea {
+  resize: vertical;
+  min-height: 50px;
+  font-size: 0.88rem;
+}
+
+.edit-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-save,
+.edit-comment-save {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ec407a, #ab47bc);
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.edit-save:hover,
+.edit-comment-save:hover {
+  transform: translateY(-1px);
+}
+
+.edit-save:disabled,
+.edit-comment-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.edit-cancel,
+.edit-comment-cancel {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b07daa;
+  background: none;
+  border: 1.5px solid rgba(206, 147, 216, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.edit-cancel:hover,
+.edit-comment-cancel:hover {
+  border-color: #ce93d8;
+  color: #7b1fa2;
+}
+
+.news-comment-edit {
+  background: none;
+  border: none;
+  color: #ce93d8;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.news-comment-edit:hover {
+  color: #7b1fa2;
+}
+
 /* --- Responsive --- */
 
 @media (max-width: 900px) {
@@ -859,5 +1374,18 @@ body.admin-mode .update-delete {
 
   .guestbook-form {
     padding: 1.2rem;
+  }
+
+  .public-form {
+    padding: 1.2rem;
+  }
+
+  .public-emoji-picker {
+    gap: 0.3rem;
+  }
+
+  .public-emoji-btn {
+    font-size: 1.1rem;
+    padding: 0.3rem 0.4rem;
   }
 }
